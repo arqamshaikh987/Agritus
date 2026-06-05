@@ -9,7 +9,8 @@ import requests
 import config
 import pickle
 import io
-import onnxruntime as ort
+import torch
+import torch.nn as nn
 from PIL import Image
 from sklearn.ensemble import RandomForestClassifier
 from markupsafe import Markup
@@ -26,6 +27,44 @@ from markupsafe import Markup
 # model.fit(X, y)
 # with open('models/RandomForest.pkl', 'wb') as file:
 #     pickle.dump(model, file)
+
+# -----------------------------------------------------------------------
+# ResNet9 model architecture (must match the training notebook exactly)
+# -----------------------------------------------------------------------
+
+class ImageClassificationBase(nn.Module):
+    pass
+
+def ConvBlock(in_channels, out_channels, pool=False):
+    layers = [nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+              nn.BatchNorm2d(out_channels),
+              nn.ReLU(inplace=True)]
+    if pool:
+        layers.append(nn.MaxPool2d(4))
+    return nn.Sequential(*layers)
+
+class ResNet9(ImageClassificationBase):
+    def __init__(self, in_channels, num_diseases):
+        super().__init__()
+        self.conv1 = ConvBlock(in_channels, 64)
+        self.conv2 = ConvBlock(64, 128, pool=True)      # 128 x 64 x 64
+        self.res1  = nn.Sequential(ConvBlock(128, 128), ConvBlock(128, 128))
+        self.conv3 = ConvBlock(128, 256, pool=True)     # 256 x 16 x 16
+        self.conv4 = ConvBlock(256, 512, pool=True)     # 512 x 4 x 4
+        self.res2  = nn.Sequential(ConvBlock(512, 512), ConvBlock(512, 512))
+        self.classifier = nn.Sequential(nn.MaxPool2d(4),
+                                        nn.Flatten(),
+                                        nn.Linear(512, num_diseases))
+
+    def forward(self, xb):
+        out = self.conv1(xb)
+        out = self.conv2(out)
+        out = self.res1(out) + out
+        out = self.conv3(out)
+        out = self.conv4(out)
+        out = self.res2(out) + out
+        out = self.classifier(out)
+        return out
 
 # Loading plant disease classification model
 
@@ -68,9 +107,12 @@ disease_classes = ['Apple___Apple_scab',
                    'Tomato___Tomato_mosaic_virus',
                    'Tomato___healthy']
 
-# Loading plant disease classification model in ONNX format
-disease_model_path = 'models/plant_disease_model.onnx'
-disease_session = ort.InferenceSession(disease_model_path)
+# Loading plant disease classification model (PyTorch .pth)
+disease_model_path = 'models/plant_disease_model.pth'
+_device = torch.device('cpu')
+disease_model = ResNet9(3, len(disease_classes))
+disease_model.load_state_dict(torch.load(disease_model_path, map_location=_device))
+disease_model.eval()
 
 # Loading crop recommendation model
 crop_recommendation_model_path = 'models/RandomForest.pkl'
@@ -108,8 +150,8 @@ def weather_fetch(city_name):
 
 def predict_image(img):
     """
-    Transforms image and predicts disease label using ONNX Runtime
-    :params: image
+    Transforms image and predicts disease label using PyTorch ResNet9
+    :params: image bytes
     :return: prediction (string)
     """
     # Open image and ensure RGB mode
@@ -118,19 +160,15 @@ def predict_image(img):
     image = image.resize((256, 256))
     # Convert to numpy array, scale to [0, 1]
     img_arr = np.array(image, dtype=np.float32) / 255.0
-    # Reorder dimensions from HWC to CHW
-    img_arr = np.transpose(img_arr, (2, 0, 1))
-    # Add batch dimension: BCHW
-    img_arr = np.expand_dims(img_arr, axis=0)
+    # Reorder dimensions from HWC to CHW, add batch dimension: BCHW
+    img_tensor = torch.from_numpy(img_arr).permute(2, 0, 1).unsqueeze(0)
 
-    # Run inference with ONNX Runtime
-    input_name = disease_session.get_inputs()[0].name
-    ort_inputs = {input_name: img_arr}
-    ort_outs = disease_session.run(None, ort_inputs)
-    
+    # Run inference
+    with torch.no_grad():
+        outputs = disease_model(img_tensor)
+
     # Extract prediction index and map to class label
-    predictions = ort_outs[0]
-    pred_idx = np.argmax(predictions, axis=1)[0]
+    pred_idx = torch.argmax(outputs, dim=1).item()
     prediction = disease_classes[pred_idx]
     return prediction
 
