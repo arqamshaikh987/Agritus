@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: agritus
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: WEATHER_API_KEY
+        value: 3ea6ac897f495cd02d46b5a12b91a620

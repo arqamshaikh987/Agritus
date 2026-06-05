@@ -1,0 +1,127 @@
+body {
+    margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+p {
+    margin: 0;
+    font-size: 17px;
+    line-height: 2em;
+    letter-spacing: 2px;
+    color: #707579;
+    font-weight: 600;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+}
+/*-- footer font styling --*/
+footer {
+    background: #191818;
+    font-family: 'Thasadith', sans-serif;
+    font-size: 100%;
+}
+
+/*-- existing footer content --*/
+
+/*-- footer --*/
+p.footer-para {
+    max-width: 650px;
+    font-size: 15px;
+}
+
+/*-- footer logo --*/
+.logo2 {
+    position: relative;
+}
+
+.logo2 a {
+    font-size: 36px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+
+.logo2 a span.fa {
+    color: #e8cd30;
+}
+
+/*-- //footer logo --*/
+
+/*-- footer home dashboard about  --*/
+.homelogo {
+    position: relative;
+}
+
+.homelogo a {
+    font-size: 18px;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.homelogo a span.fa {
+    color: #e8cd30;
+}
+
+/*-- //footer logo --*/
+
+/*-- social icons --*/
+.footercopy-social ul li,
+.contact-left-footer ul li {
+    display: inline-block;
+}
+footer {
+    background: #191818;
+}
+.footercopy-social ul li a {
+    color: #333;
+    text-align: center;
+}
+
+.footercopy-social ul li a span.fa {
+    width: 20px;
+    font-size: 20px;
+    color: #666;
+    transition: 0.5s all;
+    -webkit-transition: 0.5s all;
+    -moz-transition: 0.5s all;
+    -o-transition: 0.5s all;
+    -ms-transition: 0.5s all;
+}
+
+/*-- //social icons --*/
+
+/*-- address --*/
+.contact-left-footer ul li p span.fa {
+    color: #aaa;
+}
+
+.contact-left-footer ul li p a,
+.contact-left-footer ul li p {
+    color: #707579;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/*-- //footer --*/
+
+
+/*-- move top --*/
+a.move-top {
+    width: 34px;
+    height: 34px;
+    background: url(../images/move-top.png) no-repeat;
+    display: inline-block;
+    position: fixed;
+    bottom: 4%;
+    right: 2%;
+    z-index: 0;
+}
+/*-- //move top --*/
+
